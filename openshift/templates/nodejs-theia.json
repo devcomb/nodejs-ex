@@ -233,6 +233,10 @@
                     }
                 },
                 "env": [
+                  {
+                    "name": "SEC_PROC",
+                    "value": "true"
+                  }
                 ]
               }
             ]
