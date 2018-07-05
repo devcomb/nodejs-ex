@@ -150,7 +150,7 @@ objects:
       spec:
         containers:
         - name: oauth-proxy
-          image: openshift/oauth-proxy:v1.0.0
+          image: openshift/oauth-proxy:latest
           imagePullPolicy: IfNotPresent
           ports:
           - containerPort: 8443
@@ -159,7 +159,7 @@ objects:
           - --https-address=:8443
           - --provider=openshift
           - --openshift-service-account=proxy
-          - --upstream=http://test:8080
+          - --upstream=http://nodejs-theia-example:8080
           - --tls-cert=/etc/tls/private/tls.crt
           - --tls-key=/etc/tls/private/tls.key
           - --cookie-secret=SECRET
