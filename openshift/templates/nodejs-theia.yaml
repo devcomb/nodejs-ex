@@ -65,17 +65,6 @@ objects:
 - apiVersion: v1
   kind: Route
   metadata:
-    name: ${NAME}-ide
-  spec:
-    host: ${APPLICATION_DOMAIN}
-    port:
-      targetPort: theia
-    to:
-      kind: Service
-      name: ${NAME}
-- apiVersion: v1
-  kind: Route
-  metadata:
     name: ${NAME}
   spec:
     host: ${APPLICATION_DOMAIN}
