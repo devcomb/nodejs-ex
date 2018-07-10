@@ -3,7 +3,7 @@ kind: Template
 labels:
   app: nodejs-theia-example
   template: nodejs-theia-example
-message: 'The following service(s) have been created in your project: ${NAME}.
+message: 'The following service(s) have been created in your project: ${NAME}example.
 
 
   For more information about using this template see https://github.com/devcomb/nodejs-ex/blob/master/README.md.'
@@ -27,22 +27,22 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
-    name: proxy
+    name: ${NAME}proxy
     annotations:
       service.alpha.openshift.io/serving-cert-secret-name: proxy-tls
   spec:
     ports:
-    - name: proxy
+    - name: ${NAME}proxy
       port: 443
       targetPort: 8443
     selector:
-      app: proxy
+      name: ${NAME}proxy
 - apiVersion: v1
   kind: Service
   metadata:
     annotations:
       description: Exposes and load balances the application pods
-    name: ${NAME}
+    name: ${NAME}example
   spec:
     ports:
     - name: theia
@@ -52,20 +52,25 @@ objects:
       port: ${{SEC_PORT}}
       targetPort: ${{SEC_PORT}}
     selector:
-      name: ${NAME}
+      name: ${NAME}example
 - apiVersion: v1
   kind: Route
   metadata:
-    name: proxy
+    name: ${NAME}proxy
   spec:
-    to:
-      name: proxy
+    port:
+      targetPort: ${NAME}proxy
     tls:
       termination: Reencrypt
+    to:
+      kind: Service
+      name: ${NAME}proxy
+      weight: 100
+    wildcardPolicy: None
 - apiVersion: v1
   kind: Route
   metadata:
-    name: ${NAME}
+    name: ${NAME}example
   spec:
     host: ${APPLICATION_DOMAIN}
     name: web
@@ -73,25 +78,25 @@ objects:
       targetPort: web
     to:
       kind: Service
-      name: ${NAME}
+      name: ${NAME}example
 - apiVersion: v1
   kind: ImageStream
   metadata:
     annotations:
       description: Keeps track of changes in the application image
-    name: ${NAME}
+    name: ${NAME}example
 - apiVersion: v1
   kind: BuildConfig
   metadata:
     annotations:
       description: Defines how to build the application
       template.alpha.openshift.io/wait-for-ready: 'true'
-    name: ${NAME}
+    name: ${NAME}example
   spec:
     output:
       to:
         kind: ImageStreamTag
-        name: ${NAME}:latest
+        name: ${NAME}example:latest
     postCommit:
       script: npm test
     source:
@@ -124,37 +129,20 @@ objects:
     annotations:
       description: Defines how to deploy the application server
       template.alpha.openshift.io/wait-for-ready: 'true'
-    name: ${NAME}
+    name: ${NAME}example
   spec:
     replicas: 1
     selector:
-      name: ${NAME}
+      name: ${NAME}example
     strategy:
       type: Rolling
     template:
       metadata:
         labels:
-          name: ${NAME}
-        name: ${NAME}
+          name: ${NAME}example
+        name: ${NAME}example
       spec:
         containers:
-        - name: oauth-proxy
-          image: openshift/oauth-proxy:latest
-          imagePullPolicy: IfNotPresent
-          ports:
-          - containerPort: 8443
-            name: public
-          args:
-          - --https-address=:8443
-          - --provider=openshift
-          - --openshift-service-account=proxy
-          - --upstream=http://nodejs-theia-example:3000
-          - --tls-cert=/etc/tls/private/tls.crt
-          - --tls-key=/etc/tls/private/tls.key
-          - --cookie-secret=SECRET
-          volumeMounts:
-          - mountPath: /etc/tls/private
-            name: proxy-tls
         - name: nodejs-theia-example
           env:
           - name: SEC_PROC
@@ -190,54 +178,62 @@ objects:
         - nodejs-theia-example
         from:
           kind: ImageStreamTag
-          name: ${NAME}:latest
+          name: ${NAME}example:latest
       type: ImageChange
     - type: ConfigChange
 - apiVersion: v1
   kind: ServiceAccount
   metadata:
-    name: proxy
+    name: ${NAME}proxy
     annotations:
-      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"proxy"}}'
-- apiVersion: extensions/v1beta1
-  kind: Deployment
+      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${NAME}proxy"}}'
+
+- apiVersion: v1
+  kind: DeploymentConfig
   metadata:
-    name: proxy
+    annotations:
+      description: Defines how to deploy the application server
+      template.alpha.openshift.io/wait-for-ready: 'true'
+    name: ${NAME}proxy
   spec:
     replicas: 1
     selector:
-      matchLabels:
-        app: proxy
+      name: ${NAME}proxy
+    strategy:
+      type: Rolling
     template:
       metadata:
         labels:
-          app: proxy
+          name: ${NAME}proxy
+        name: ${NAME}proxy
       spec:
-        serviceAccountName: proxy
+        serviceAccount: ${NAME}proxy
+        serviceAccountName: ${NAME}proxy
         containers:
         - name: oauth-proxy
-          image: openshift/oauth-proxy:latest
+          image: docker.io/openshift/oauth-proxy:latest
           imagePullPolicy: IfNotPresent
           ports:
           - containerPort: 8443
             name: public
+            protocol: TCP
           args:
           - --https-address=:8443
           - --provider=openshift
-          - --openshift-service-account=proxy
-          - --upstream=http://nodejs-theia-example:8080
+          - --openshift-service-account=${NAME}proxy
+          - --upstream=http://nodejs-theia-example:3000
           - --tls-cert=/etc/tls/private/tls.crt
           - --tls-key=/etc/tls/private/tls.key
           - --cookie-secret=SECRET
           volumeMounts:
           - mountPath: /etc/tls/private
             name: proxy-tls
-        - name: app
-          image: openshift/hello-openshift:latest
         volumes:
         - name: proxy-tls
           secret:
             secretName: proxy-tls
+    triggers:
+    - type: ConfigChange
 
 parameters:
   - description: Run Node.js Application.
@@ -264,7 +260,7 @@ parameters:
     displayName: Name
     name: NAME
     required: true
-    value: nodejs-theia-example
+    value: nodejs-theia-
   - description: The OpenShift Namespace where the ImageStream resides.
     displayName: Namespace
     name: NAMESPACE
