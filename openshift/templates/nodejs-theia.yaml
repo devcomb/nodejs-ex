@@ -304,11 +304,12 @@ parameters:
     displayName: Custom NPM Mirror URL
     name: NPM_MIRROR
     value: ''
-- description: Secondary Application Run Command
+    value: ''
+  - description: Secondary Application Run Command
     displayName: Secondary Application Run Command
     name: SEC_COMMAND
     value: 'exec npm run -d start'
-- description: Secondary Application Debug Command
+  - description: Secondary Application Debug Command
     displayName: Secondary Application Debug Command
     name: SEC_DEBUG_COMMAND
     value: 'exec nodemon --inspect=5858'
