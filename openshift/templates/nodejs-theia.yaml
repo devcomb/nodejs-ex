@@ -337,6 +337,10 @@ parameters:
     displayName: Theia Git URL
     name: GIT_REPO_URL
     value: ''
+  - description: Git Email for Theia to use
+    displayName: Theia Git Email
+    name: GIT_EMAIL
+    value: ''
   - description: Git Username for Theia to use
     displayName: Theia Git Username
     name: GIT_USERNAME
