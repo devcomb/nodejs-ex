@@ -166,6 +166,7 @@ objects:
             timeoutSeconds: 3
           resources:
             limits:
+              cpu: ${CPU_LIMIT}
               memory: ${MEMORY_LIMIT}
         volumes:
         - name: proxy-tls
@@ -228,6 +229,10 @@ objects:
           volumeMounts:
           - mountPath: /etc/tls/private
             name: proxy-tls
+          resources:
+            limits:
+              cpu: ${CPU_PROXY_LIMIT}
+              memory: ${MEMORY_PROXY_LIMIT}
         volumes:
         - name: proxy-tls
           secret:
@@ -271,6 +276,21 @@ parameters:
     name: MEMORY_LIMIT
     required: true
     value: 512Mi
+  - description: Maximum amount of CPU the container can use.
+    displayName: CPU Limit
+    name: CPU_LIMIT
+    required: true
+    value: 200
+  - description: Maximum amount of memory the proxy container can use.
+    displayName: Proxy Pemory Limit
+    name: MEMORY_PROXY_LIMIT
+    required: true
+    value: 512Mi
+  - description: Maximum amount of CPU the proxy container can use.
+    displayName: Proxy CPU Limit
+    name: CPU_PROXY_LIMIT
+    required: true
+    value: 200
   - description: The URL of the repository with your application source code.
     displayName: Git Repository URL
     name: SOURCE_REPOSITORY_URL
