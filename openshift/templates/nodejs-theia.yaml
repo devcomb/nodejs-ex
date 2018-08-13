@@ -329,7 +329,7 @@ parameters:
   - description: Force Builder Base Image Pull from Repo
     displayName: Force Pull Builder Image
     name: FORCE_PULL
-    required: true
+    required: false
     value: 'true'
   - description: Secondary Application Run Command
     displayName: Secondary Application Run Command
