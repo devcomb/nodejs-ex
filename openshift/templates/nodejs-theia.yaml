@@ -110,6 +110,7 @@ objects:
         env:
         - name: NPM_MIRROR
           value: ${NPM_MIRROR}
+        forcePull: ${FORCE_PULL}
         from:
           kind: DockerImage
           name: docker.io/devcomb/theia-openshift:latest
@@ -325,6 +326,11 @@ parameters:
     name: NPM_MIRROR
     value: ''
     value: ''
+  - description: Force Builder Base Image Pull from Repo
+    displayName: Force Pull Builder Image
+    name: FORCE_PULL
+    required: true
+    value: 'true'
   - description: Secondary Application Run Command
     displayName: Secondary Application Run Command
     name: SEC_COMMAND
