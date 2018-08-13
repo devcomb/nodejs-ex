@@ -333,3 +333,19 @@ parameters:
     displayName: Secondary Application Debug Command
     name: SEC_DEBUG_COMMAND
     value: 'exec nodemon --inspect=5858'
+  - description: Git URL for Theia to use
+    displayName: Theia Git URL
+    name: GIT_REPO_URL
+    value: ''
+  - description: Git Username for Theia to use
+    displayName: Theia Git Username
+    name: GIT_USERNAME
+    value: ''
+  - description: Git Password for Theia to use
+    displayName: Theia Git Password
+    name: GIT_PASSWORD
+    value: ''
+  - description: Git Token for Theia to use
+    displayName: Theia Git Token
+    name: GIT_TOKEN
+    value: ''
