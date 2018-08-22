@@ -24,16 +24,16 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
-    name: ${NAME}proxy
+    name: ${NAME}-proxy
     annotations:
       service.alpha.openshift.io/serving-cert-secret-name: proxy-tls
   spec:
     ports:
-    - name: ${NAME}proxy
+    - name: ${NAME}-proxy
       port: 443
       targetPort: 8443
     selector:
-      name: ${NAME}proxy
+      name: ${NAME}-proxy
 - apiVersion: v1
   kind: Service
   metadata:
@@ -53,15 +53,15 @@ objects:
 - apiVersion: v1
   kind: Route
   metadata:
-    name: ${NAME}proxy
+    name: ${NAME}-proxy
   spec:
     port:
-      targetPort: ${NAME}proxy
+      targetPort: ${NAME}-proxy
     tls:
       termination: Reencrypt
     to:
       kind: Service
-      name: ${NAME}proxy
+      name: ${NAME}-proxy
       weight: 100
     wildcardPolicy: None
 - apiVersion: v1
@@ -135,7 +135,7 @@ objects:
         name: ${NAME}
       spec:
         containers:
-        - name: nodejs-theia
+        - name: ${NAME}
           env:
           - name: SEC_PROC
             value: "${SEC_PROC}"
@@ -168,12 +168,13 @@ objects:
     - imageChangeParams:
         automatic: true
         containerNames:
-        - nodejs-theia
+        - ${NAME}
         from:
           kind: ImageStreamTag
           name: ${NAME}:latest
       type: ImageChange
     - type: ConfigChange
+
 - apiVersion: v1
   kind: ServiceAccount
   metadata:
@@ -187,21 +188,21 @@ objects:
     annotations:
       description: Defines how to deploy the application server
       template.alpha.openshift.io/wait-for-ready: 'true'
-    name: ${NAME}proxy
+    name: ${NAME}-proxy
   spec:
     replicas: 1
     selector:
-      name: ${NAME}proxy
+      name: ${NAME}-proxy
     strategy:
       type: Rolling
     template:
       metadata:
         labels:
-          name: ${NAME}proxy
-        name: ${NAME}proxy
+          name: ${NAME}-proxy
+        name: ${NAME}-proxy
       spec:
-        serviceAccount: ${NAME}proxy
-        serviceAccountName: ${NAME}proxy
+        serviceAccount: ${NAME}-proxy
+        serviceAccountName: ${NAME}-proxy
         containers:
         - name: oauth-proxy
           image: docker.io/openshift/oauth-proxy:latest
@@ -213,8 +214,8 @@ objects:
           args:
           - --https-address=:8443
           - --provider=openshift
-          - --openshift-service-account=${NAME}proxy
-          - --upstream=http://nodejs-theia:3000
+          - --openshift-service-account=${NAME}-proxy
+          - --upstream=http://${NAME}:3000
           - --tls-cert=/etc/tls/private/tls.crt
           - --tls-key=/etc/tls/private/tls.key
           - --cookie-secret=SECRET
@@ -231,6 +232,124 @@ objects:
             secretName: proxy-tls
     triggers:
     - type: ConfigChange
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: Exposes and load balances the application pods
+    name: ${NAME}-development
+  spec:
+    ports:
+    - name: theia-dev
+      port: ${{THEIA_PORT}}
+      targetPort: ${{THEIA_PORT}}
+    - name: web-dev
+      port: ${{SEC_PORT}}
+      targetPort: ${{SEC_PORT}}
+    selector:
+      name: ${NAME}-development
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      description: Defines how to deploy the application server
+      template.alpha.openshift.io/wait-for-ready: 'true'
+    name: ${NAME}-development
+  spec:
+    replicas: 1
+    selector:
+      name: ${NAME}-development
+    strategy:
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          name: ${NAME}-development
+        name: ${NAME}-development
+      spec:
+        containers:
+        - name: ${NAME}-development
+          env:
+          - name: SEC_PROC
+            value: "${SEC_PROC}"
+          - name: DEV_MODE
+            value: "${DEV_MODE}"
+          image: ' '
+          livenessProbe:
+            httpGet:
+              path: /
+              port: ${{SEC_PORT}}
+            initialDelaySeconds: 30
+            timeoutSeconds: 3
+          ports:
+          - containerPort: ${{SEC_PORT}}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: ${{SEC_PORT}}
+            initialDelaySeconds: 3
+            timeoutSeconds: 3
+          resources:
+            limits:
+              cpu: ${CPU_LIMIT}
+              memory: ${MEMORY_LIMIT}
+        volumes:
+        - name: proxy-tls
+          secret:
+            secretName: proxy-tls
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${NAME}-development
+        from:
+          kind: ImageStreamTag
+          name: ${NAME}-development:latest
+      type: ImageChange
+    - type: ConfigChange
+
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      description: Keeps track of changes in the application image
+    name: ${NAME}-development
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      description: Defines how to build the application
+      template.alpha.openshift.io/wait-for-ready: "true"
+    name: ${NAME}-development
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${NAME}-development:latest
+    postCommit:
+      script: npm test
+    source:
+      contextDir: ${CONTEXT_DIR}
+      git:
+        ref: ${SOURCE_REPOSITORY_REF_DEV}
+        uri: ${SOURCE_REPOSITORY_URL_DEV}
+      type: Git
+    strategy:
+      sourceStrategy:
+        env:
+        - name: NPM_MIRROR
+          value: "${NPM_MIRROR}"
+        forcePull: true
+        from:
+          kind: DockerImage
+          name: docker.io/devcomb/theia-openshift:latest
+      type: Source
+    triggers:
+    - type: ImageChange
+    - type: ConfigChange
+    
 parameters:
   - description: Run Node.js Application.
     displayName: Secondary Application
@@ -291,6 +410,15 @@ parameters:
       are not using the default branch.
     displayName: Git Reference
     name: SOURCE_REPOSITORY_REF
+  - description: The URL of the repository with your dev application source code.
+    displayName: Git Repository URL
+    name: SOURCE_REPOSITORY_URL_DEV
+    required: true
+    value: https://github.com/openshift/nodejs-ex.git
+  - description: Set this to a dev branch name, tag or other ref of your repository if you
+      are not using the default branch.
+    displayName: Git Reference
+    name: SOURCE_REPOSITORY_REF_DEV
   - description: Set this to the relative path to your project if it is not in the root
       of your repository.
     displayName: Context Directory
