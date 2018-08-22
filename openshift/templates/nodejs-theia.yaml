@@ -1,12 +1,9 @@
 apiVersion: v1
 kind: Template
 labels:
-  app: nodejs-theia-example
-  template: nodejs-theia-example
-message: 'The following service(s) have been created in your project: ${NAME}example.
-
-
-  For more information about using this template see https://github.com/devcomb/nodejs-ex/blob/master/README.md.'
+  app: nodejs-theia
+  template: nodejs-theia
+message: 'The following service(s) have been created in your project: ${NAME}. For more information about using this template see https://github.com/devcomb/nodejs-ex/blob/master/README.md.'
 metadata:
   annotations:
     description: An example Node.js application with Theia IDE but no database. For
@@ -42,7 +39,7 @@ objects:
   metadata:
     annotations:
       description: Exposes and load balances the application pods
-    name: ${NAME}example
+    name: ${NAME}
   spec:
     ports:
     - name: theia
@@ -52,7 +49,7 @@ objects:
       port: ${{SEC_PORT}}
       targetPort: ${{SEC_PORT}}
     selector:
-      name: ${NAME}example
+      name: ${NAME}
 - apiVersion: v1
   kind: Route
   metadata:
@@ -70,7 +67,7 @@ objects:
 - apiVersion: v1
   kind: Route
   metadata:
-    name: ${NAME}example
+    name: ${NAME}
   spec:
     host: ${APPLICATION_DOMAIN}
     name: web
@@ -78,25 +75,25 @@ objects:
       targetPort: web
     to:
       kind: Service
-      name: ${NAME}example
+      name: ${NAME}
 - apiVersion: v1
   kind: ImageStream
   metadata:
     annotations:
       description: Keeps track of changes in the application image
-    name: ${NAME}example
+    name: ${NAME}
 - apiVersion: v1
   kind: BuildConfig
   metadata:
     annotations:
       description: Defines how to build the application
       template.alpha.openshift.io/wait-for-ready: 'true'
-    name: ${NAME}example
+    name: ${NAME}
   spec:
     output:
       to:
         kind: ImageStreamTag
-        name: ${NAME}example:latest
+        name: ${NAME}:latest
     postCommit:
       script: npm test
     source:
@@ -109,7 +106,7 @@ objects:
       sourceStrategy:
         env:
         - name: NPM_MIRROR
-          value: ${NPM_MIRROR}
+          value: "${NPM_MIRROR}"
         forcePull: ${FORCE_PULL}
         from:
           kind: DockerImage
@@ -130,21 +127,21 @@ objects:
     annotations:
       description: Defines how to deploy the application server
       template.alpha.openshift.io/wait-for-ready: 'true'
-    name: ${NAME}example
+    name: ${NAME}
   spec:
     replicas: 1
     selector:
-      name: ${NAME}example
+      name: ${NAME}
     strategy:
       type: Rolling
     template:
       metadata:
         labels:
-          name: ${NAME}example
-        name: ${NAME}example
+          name: ${NAME}
+        name: ${NAME}
       spec:
         containers:
-        - name: nodejs-theia-example
+        - name: nodejs-theia
           env:
           - name: SEC_PROC
             value: "${SEC_PROC}"
@@ -177,10 +174,10 @@ objects:
     - imageChangeParams:
         automatic: true
         containerNames:
-        - nodejs-theia-example
+        - nodejs-theia
         from:
           kind: ImageStreamTag
-          name: ${NAME}example:latest
+          name: ${NAME}:latest
       type: ImageChange
     - type: ConfigChange
 - apiVersion: v1
@@ -223,7 +220,7 @@ objects:
           - --https-address=:8443
           - --provider=openshift
           - --openshift-service-account=${NAME}proxy
-          - --upstream=http://nodejs-theia-example:3000
+          - --upstream=http://nodejs-theia:3000
           - --tls-cert=/etc/tls/private/tls.crt
           - --tls-key=/etc/tls/private/tls.key
           - --cookie-secret=SECRET
@@ -240,7 +237,6 @@ objects:
             secretName: proxy-tls
     triggers:
     - type: ConfigChange
-
 parameters:
   - description: Run Node.js Application.
     displayName: Secondary Application
@@ -266,12 +262,12 @@ parameters:
     displayName: Name
     name: NAME
     required: true
-    value: nodejs-theia-
+    value: 'nodejs-theia'
   - description: The OpenShift Namespace where the ImageStream resides.
     displayName: Namespace
     name: NAMESPACE
     required: true
-    value: openshift
+    value: 'openshift'
   - description: Maximum amount of memory the container can use.
     displayName: Memory Limit
     name: MEMORY_LIMIT
@@ -281,7 +277,7 @@ parameters:
     displayName: CPU Limit
     name: CPU_LIMIT
     required: true
-    value: 200
+    value: '200'
   - description: Maximum amount of memory the proxy container can use.
     displayName: Proxy Pemory Limit
     name: MEMORY_PROXY_LIMIT
@@ -291,7 +287,7 @@ parameters:
     displayName: Proxy CPU Limit
     name: CPU_PROXY_LIMIT
     required: true
-    value: 200
+    value: '200'
   - description: The URL of the repository with your application source code.
     displayName: Git Repository URL
     name: SOURCE_REPOSITORY_URL
@@ -324,7 +320,6 @@ parameters:
   - description: The custom NPM mirror URL
     displayName: Custom NPM Mirror URL
     name: NPM_MIRROR
-    value: ''
     value: ''
   - description: Force Builder Base Image Pull from Repo
     displayName: Force Pull Builder Image
