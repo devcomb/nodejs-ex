@@ -271,7 +271,7 @@ parameters:
     displayName: CPU Limit
     name: CPU_LIMIT
     required: true
-    value: '200'
+    value: '200m'
   - description: Maximum amount of memory the proxy container can use.
     displayName: Proxy Pemory Limit
     name: MEMORY_PROXY_LIMIT
@@ -281,7 +281,7 @@ parameters:
     displayName: Proxy CPU Limit
     name: CPU_PROXY_LIMIT
     required: true
-    value: '200'
+    value: '10m'
   - description: The URL of the repository with your application source code.
     displayName: Git Repository URL
     name: SOURCE_REPOSITORY_URL
