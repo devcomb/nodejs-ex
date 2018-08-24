@@ -24,7 +24,7 @@ objects:
 - apiVersion: v1
   kind: Service
   metadata:
-    name: ${NAME}-proxy
+    name: ${NAME}-proxy-${SERVICE_HASH}
     annotations:
       service.alpha.openshift.io/serving-cert-secret-name: proxy-tls
   spec:
@@ -39,7 +39,7 @@ objects:
   metadata:
     annotations:
       description: Exposes and load balances the application pods
-    name: ${NAME}
+    name: ${NAME}-${SERVICE_HASH}
   spec:
     ports:
     - name: theia
@@ -61,21 +61,9 @@ objects:
       termination: Reencrypt
     to:
       kind: Service
-      name: ${NAME}-proxy
+      name: ${NAME}-proxy-${SERVICE_HASH}
       weight: 100
     wildcardPolicy: None
-- apiVersion: v1
-  kind: Route
-  metadata:
-    name: ${NAME}
-  spec:
-    host: ${APPLICATION_DOMAIN}
-    name: web
-    port:
-      targetPort: web
-    to:
-      kind: Service
-      name: ${NAME}
 - apiVersion: v1
   kind: ImageStream
   metadata:
@@ -110,7 +98,7 @@ objects:
         forcePull: true
         from:
           kind: DockerImage
-          name: docker.io/devcomb/theia-openshift:latest
+          name: docker.io/centos/nodejs-8-centos7:latest
       type: Source
     triggers:
     - type: ImageChange
@@ -215,7 +203,7 @@ objects:
           - --https-address=:8443
           - --provider=openshift
           - --openshift-service-account=${NAME}-proxy
-          - --upstream=http://${NAME}:3000
+          - --upstream=http://${NAME}-nginx-${SERVICE_HASH}:8080
           - --tls-cert=/etc/tls/private/tls.crt
           - --tls-key=/etc/tls/private/tls.key
           - --cookie-secret=SECRET
@@ -238,7 +226,7 @@ objects:
   metadata:
     annotations:
       description: Exposes and load balances the application pods
-    name: ${NAME}-development
+    name: ${NAME}-development-${SERVICE_HASH}
   spec:
     ports:
     - name: theia-dev
@@ -277,12 +265,6 @@ objects:
           - name: DEV_MODE
             value: "${DEV_MODE}"
           image: ' '
-          livenessProbe:
-            httpGet:
-              path: /
-              port: ${{SEC_PORT}}
-            initialDelaySeconds: 30
-            timeoutSeconds: 3
           ports:
           - containerPort: ${{SEC_PORT}}
           readinessProbe:
@@ -349,7 +331,125 @@ objects:
     triggers:
     - type: ImageChange
     - type: ConfigChange
-    
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      description: Nginx proxy with authentication based routing
+      template.alpha.openshift.io/wait-for-ready: 'true'
+    labels:
+      app: ${NAME}-nginx
+    name: ${NAME}-nginx
+  spec:
+    replicas: 1
+    selector:
+      name: ${NAME}-nginx
+    strategy:
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          name: ${NAME}-nginx
+        name: ${NAME}-nginx
+      spec:
+        containers:
+        - env:
+          - name: APPWEB1_ADDR
+            value: ${NAME}-${SERVICE_HASH}:8080
+          - name: APPWEB2_ADDR
+            value: ${NAME}-development-${SERVICE_HASH}:8080
+          - name: APPWEB3_ADDR
+            value: ${NAME}-development-${SERVICE_HASH}:3000
+          - name: DEV_EMAILS_WITH_LOCATIONS
+            value: "$DEV_EMAILS_WITH_LOCATIONS"
+          image: ' '
+          name: ${NAME}-nginx
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          - containerPort: 8443
+            protocol: TCP
+          resources:
+            limits:
+              cpu: ${CPU_NGINX_LIMIT}
+              memory: ${MEMORY_NGINX_LIMIT}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+    test: false
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${NAME}-nginx
+        from:
+          kind: ImageStreamTag
+          name: ${NAME}-nginx:latest
+      type: ImageChange
+    - type: ConfigChange
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftWebConsole
+    creationTimestamp: null
+    labels:
+      app: ${NAME}-nginx-${SERVICE_HASH}
+    name: ${NAME}-nginx-${SERVICE_HASH}
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      name: ${NAME}-nginx
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftWebConsole
+    labels:
+      app: ${NAME}-nginx
+    name: ${NAME}-nginx
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${NAME}-nginx:latest
+    postCommit: {}
+    runPolicy: Serial
+    source:
+      git:
+        ref: master
+        uri: 'https://github.com/devcomb/nginx-ex.git'
+      type: Git
+    strategy:
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: 'nginx:1.12'
+          namespace: openshift
+      type: Source
+    triggers:
+    - type: ImageChange
+    - type: ConfigChange
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      description: Keeps track of changes in the application image
+    name: ${NAME}-nginx
+
 parameters:
   - description: Run Node.js Application.
     displayName: Secondary Application
@@ -395,12 +495,22 @@ parameters:
     displayName: Proxy Pemory Limit
     name: MEMORY_PROXY_LIMIT
     required: true
-    value: 512Mi
+    value: 100Mi
   - description: Maximum amount of CPU the proxy container can use.
     displayName: Proxy CPU Limit
     name: CPU_PROXY_LIMIT
     required: true
     value: '10m'
+  - description: Maximum amount of memory the nginx container(s) can use.
+    displayName: Proxy Pemory Limit
+    name: MEMORY_NGINX_LIMIT
+    required: true
+    value: 100Mi
+  - description: Maximum amount of CPU the nginx container(s) can use.
+    displayName: Proxy CPU Limit
+    name: CPU_NGINX_LIMIT
+    required: true
+    value: '2m'
   - description: Maximum amount of memory the container can use.
     displayName: Memory Limit
     name: MEMORY_DEV_LIMIT
@@ -486,3 +596,15 @@ parameters:
     displayName: Theia Git Token
     name: GIT_TOKEN
     value: ''
+  - description: Generate hash for service names to use of nginx proxy.
+    displayName: Service Hash
+    from: '[a-z]{16}'
+    generate: expression
+    name: SERVICE_HASH
+    required: true
+  - description: List developer emails that can view /dev /dev-ide . 
+    displayName: Developer Emails.
+    name: DEV_EMAILS_WITH_LOCATIONS
+    value: 'changeme@example.com development;'
+    required: false
+    
