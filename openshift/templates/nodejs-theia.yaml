@@ -207,6 +207,7 @@ objects:
           - --tls-cert=/etc/tls/private/tls.crt
           - --tls-key=/etc/tls/private/tls.key
           - --cookie-secret=SECRET
+          - --proxy-prefix=/oauth2'
           volumeMounts:
           - mountPath: /etc/tls/private
             name: proxy-tls
@@ -267,12 +268,6 @@ objects:
           image: ' '
           ports:
           - containerPort: ${{SEC_PORT}}
-          readinessProbe:
-            httpGet:
-              path: /
-              port: ${{SEC_PORT}}
-            initialDelaySeconds: 3
-            timeoutSeconds: 3
           resources:
             limits:
               cpu: ${CPU_DEV_LIMIT}
@@ -602,9 +597,8 @@ parameters:
     generate: expression
     name: SERVICE_HASH
     required: true
-  - description: List developer emails that can view /dev /dev-ide . 
+  - description: List developer emails that can view /dev /dev-ide .
     displayName: Developer Emails.
     name: DEV_EMAILS_WITH_LOCATIONS
     value: 'changeme@example.com development;'
     required: false
-    
