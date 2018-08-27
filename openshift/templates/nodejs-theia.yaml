@@ -207,7 +207,7 @@ objects:
           - --tls-cert=/etc/tls/private/tls.crt
           - --tls-key=/etc/tls/private/tls.key
           - --cookie-secret=SECRET
-          - --proxy-prefix=/oauth2'
+          - --proxy-prefix=/oauth2
           volumeMounts:
           - mountPath: /etc/tls/private
             name: proxy-tls
