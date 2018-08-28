@@ -356,6 +356,8 @@ objects:
             value: ${NAME}-development-${SERVICE_HASH}:8080
           - name: APPWEB3_ADDR
             value: ${NAME}-development-${SERVICE_HASH}:3000
+          - name: APPWEB4_ADDR
+            value: ${NAME}-proxy-${SERVICE_HASH}:443
           - name: DEV_EMAILS_WITH_LOCATIONS
             value: "$DEV_EMAILS_WITH_LOCATIONS"
           image: ' '
