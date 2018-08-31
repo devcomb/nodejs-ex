@@ -199,19 +199,19 @@ objects:
           - containerPort: 8080
             name: public
             protocol: TCP
-          args:
-            - '--http-address=:8080'
-            - '--provider=openshift'
-            - '--openshift-service-account=nodejs-theia-proxy'
-            - '--cookie-secret=C3CCC9932D9070D2B985A50E8F3E2267'
-            - '--cookie-secure=false'
-            - '--proxy-prefix=/oauth2'
-            - '--pass-basic-auth=true'
-            - '--pass-access-token=true'
-            - '--set-xauthrequest'
-            - '--upstream=http://nodejs-theia-nginx-xgngcbduvuxctihm:8080'
-            - '--tls-cert=/etc/tls/private/tls.crt'
-            - '--tls-key=/etc/tls/private/tls.key'
+          args:          
+            - --http-address=:8080
+            - --provider=openshift
+            - --openshift-service-account==${NAME}-nginx
+            - --cookie-secret=${COOKIE_SECRET}
+            - --cookie-secure=false
+            - --proxy-prefix=/oauth2
+            - --pass-basic-auth=true
+            - --pass-access-token=true
+            - --set-xauthrequest
+            - --upstream=http://${NAME}-nginx-${SERVICE_HASH}:8080
+            - --tls-cert=/etc/tls/private/tls.crt
+            - --tls-key=/etc/tls/private/tls.key
           volumeMounts:
           - mountPath: /etc/tls/private
             name: proxy-tls
@@ -602,6 +602,12 @@ parameters:
     from: '[a-z]{16}'
     generate: expression
     name: SERVICE_HASH
+    required: true
+  - description: Generate hash for cookie secret.
+    displayName: Cookie Secret
+    from: '[a-z]{16}'
+    generate: expression
+    name: COOKIE_SECRET
     required: true
   - description: List developer emails that can view /dev /dev-ide .
     displayName: Developer Emails.
