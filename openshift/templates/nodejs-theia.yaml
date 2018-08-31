@@ -452,6 +452,11 @@ objects:
     name: ${NAME}-nginx
 
 parameters:
+  - description: List developer emails that can view /dev /dev-ide .
+    displayName: Developer Emails.
+    name: DEV_EMAILS_WITH_LOCATIONS
+    value: 'changeme@example.com development;'
+    required: false
   - description: Run Node.js Application.
     displayName: Secondary Application
     name: SEC_PROC
@@ -609,8 +614,3 @@ parameters:
     generate: expression
     name: COOKIE_SECRET
     required: true
-  - description: List developer emails that can view /dev /dev-ide .
-    displayName: Developer Emails.
-    name: DEV_EMAILS_WITH_LOCATIONS
-    value: 'changeme@example.com development;'
-    required: false
