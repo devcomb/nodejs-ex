@@ -363,7 +363,7 @@ objects:
           - name: APPWEB4_ADDR
             value: ${NAME}-proxy-${SERVICE_HASH}:443
           - name: DEV_EMAILS_WITH_LOCATIONS
-            value: "$DEV_EMAILS_WITH_LOCATIONS"
+            value: $DEV_EMAILS_WITH_LOCATIONS
           image: ' '
           name: ${NAME}-nginx
           ports:
