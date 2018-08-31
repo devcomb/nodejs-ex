@@ -202,7 +202,7 @@ objects:
           args:          
             - --http-address=:8080
             - --provider=openshift
-            - --openshift-service-account==${NAME}-proxy
+            - --openshift-service-account=${NAME}-proxy
             - --cookie-secret=${COOKIE_SECRET}
             - --cookie-secure=false
             - --proxy-prefix=/oauth2
