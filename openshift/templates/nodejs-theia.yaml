@@ -605,7 +605,7 @@ parameters:
     required: true
   - description: Generate hash for cookie secret.
     displayName: Cookie Secret
-    from: '[a-z]{16}'
+    from: '[a-z]{20}'
     generate: expression
     name: COOKIE_SECRET
     required: true
