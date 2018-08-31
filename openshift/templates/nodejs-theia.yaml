@@ -53,15 +53,15 @@ objects:
 - apiVersion: v1
   kind: Route
   metadata:
-    name: ${NAME}-proxy
+    name: ${NAME}-nginx
   spec:
     port:
-      targetPort: ${NAME}-proxy
+      targetPort: ${NAME}-nginx
     tls:
       termination: Reencrypt
     to:
       kind: Service
-      name: ${NAME}-proxy-${SERVICE_HASH}
+      name: ${NAME}-nginx-${SERVICE_HASH}
       weight: 100
     wildcardPolicy: None
 - apiVersion: v1
@@ -168,7 +168,7 @@ objects:
   metadata:
     name: ${NAME}-proxy
     annotations:
-      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${NAME}-proxy"}}'
+      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${NAME}-nginx"}}'
 
 - apiVersion: v1
   kind: DeploymentConfig
@@ -196,18 +196,22 @@ objects:
           image: docker.io/openshift/oauth-proxy:latest
           imagePullPolicy: IfNotPresent
           ports:
-          - containerPort: 8443
+          - containerPort: 8080
             name: public
             protocol: TCP
           args:
-          - --https-address=:8443
-          - --provider=openshift
-          - --openshift-service-account=${NAME}-proxy
-          - --upstream=http://${NAME}-nginx-${SERVICE_HASH}:8080
-          - --tls-cert=/etc/tls/private/tls.crt
-          - --tls-key=/etc/tls/private/tls.key
-          - --cookie-secret=SECRET
-          - --proxy-prefix=/oauth2
+            - '--http-address=:8080'
+            - '--provider=openshift'
+            - '--openshift-service-account=nodejs-theia-proxy'
+            - '--cookie-secret=C3CCC9932D9070D2B985A50E8F3E2267'
+            - '--cookie-secure=false'
+            - '--proxy-prefix=/oauth2'
+            - '--pass-basic-auth=true'
+            - '--pass-access-token=true'
+            - '--set-xauthrequest'
+            - '--upstream=http://nodejs-theia-nginx-xgngcbduvuxctihm:8080'
+            - '--tls-cert=/etc/tls/private/tls.crt'
+            - '--tls-key=/etc/tls/private/tls.key'
           volumeMounts:
           - mountPath: /etc/tls/private
             name: proxy-tls
