@@ -56,9 +56,9 @@ objects:
     name: ${NAME}-nginx
   spec:
     port:
-      targetPort: ${NAME}-nginx
+      targetPort: 8080-tcp
     tls:
-      termination: Reencrypt
+      termination: edge
     to:
       kind: Service
       name: ${NAME}-nginx-${SERVICE_HASH}
