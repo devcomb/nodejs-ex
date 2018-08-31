@@ -452,7 +452,7 @@ objects:
     name: ${NAME}-nginx
 
 parameters:
-  - description: List developer emails that can view /dev /dev-ide .
+  - description: List developer emails that can view /dev.
     displayName: Developer Emails.
     name: DEV_EMAILS_WITH_LOCATIONS
     value: 'changeme@example.com development;'
