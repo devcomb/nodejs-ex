@@ -168,7 +168,7 @@ objects:
   metadata:
     name: ${NAME}-proxy
     annotations:
-      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${NAME}-nginx"}}'
+      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${NAME}-proxy"}}'
 
 - apiVersion: v1
   kind: DeploymentConfig
@@ -202,7 +202,7 @@ objects:
           args:          
             - --http-address=:8080
             - --provider=openshift
-            - --openshift-service-account==${NAME}-nginx
+            - --openshift-service-account==${NAME}-proxy
             - --cookie-secret=${COOKIE_SECRET}
             - --cookie-secure=false
             - --proxy-prefix=/oauth2
