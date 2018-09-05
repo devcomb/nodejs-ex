@@ -485,13 +485,13 @@ parameters:
     displayName: Git Reference
     name: SOURCE_REPOSITORY_REF
   - description: The URL of the repository with your dev application source code.
-    displayName: Git Repository URL
+    displayName: Development Git Repository URL
     name: SOURCE_REPOSITORY_URL_DEV
     required: true
     value: https://github.com/openshift/nodejs-ex.git
   - description: Set this to a dev branch name, tag or other ref of your repository if you
       are not using the default branch.
-    displayName: Git Reference
+    displayName: Development Git Reference
     name: SOURCE_REPOSITORY_REF_DEV
     required: true
     value: master
