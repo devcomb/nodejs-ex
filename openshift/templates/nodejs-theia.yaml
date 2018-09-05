@@ -22,6 +22,20 @@ metadata:
   name: nodejs-theia
 objects:
 - apiVersion: v1
+  kind: Route
+  metadata:
+    name: ${NAME}-nginx
+  spec:
+    port:
+      targetPort: 8080-tcp
+    tls:
+      termination: edge
+    to:
+      kind: Service
+      name: ${NAME}-nginx-${SERVICE_HASH}
+      weight: 100
+    wildcardPolicy: None
+- apiVersion: v1
   kind: Service
   metadata:
     name: ${NAME}-proxy-${SERVICE_HASH}
@@ -42,28 +56,11 @@ objects:
     name: ${NAME}-${SERVICE_HASH}
   spec:
     ports:
-    - name: theia
-      port: ${{THEIA_PORT}}
-      targetPort: ${{THEIA_PORT}}
     - name: web
       port: ${{SEC_PORT}}
       targetPort: ${{SEC_PORT}}
     selector:
       name: ${NAME}
-- apiVersion: v1
-  kind: Route
-  metadata:
-    name: ${NAME}-nginx
-  spec:
-    port:
-      targetPort: 8080-tcp
-    tls:
-      termination: edge
-    to:
-      kind: Service
-      name: ${NAME}-nginx-${SERVICE_HASH}
-      weight: 100
-    wildcardPolicy: None
 - apiVersion: v1
   kind: ImageStream
   metadata:
@@ -178,7 +175,7 @@ objects:
       template.alpha.openshift.io/wait-for-ready: 'true'
     name: ${NAME}-proxy
   spec:
-    replicas: 1
+    replicas: ${DEV_PODS}
     selector:
       name: ${NAME}-proxy
     strategy:
@@ -207,7 +204,6 @@ objects:
             - --cookie-secure=false
             - --proxy-prefix=/oauth2
             - --pass-basic-auth=true
-            - --pass-access-token=true
             - --set-xauthrequest
             - --upstream=http://${NAME}-nginx-${SERVICE_HASH}:8080
             - --tls-cert=/etc/tls/private/tls.crt
@@ -364,6 +360,8 @@ objects:
             value: ${NAME}-proxy-${SERVICE_HASH}:8080
           - name: DEV_EMAILS_WITH_LOCATIONS
             value: "${DEV_EMAILS_WITH_LOCATIONS}"
+          - name: DEV_EMAILS_WITH_LOCATIONS_IDE
+            value: "${DEV_EMAILS_WITH_LOCATIONS_IDE}"
           image: ' '
           name: ${NAME}-nginx
           ports:
@@ -371,6 +369,16 @@ objects:
             protocol: TCP
           - containerPort: 8443
             protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - cat
+                - /tmp/health
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
           resources:
             limits:
               cpu: ${CPU_NGINX_LIMIT}
@@ -452,11 +460,41 @@ objects:
     name: ${NAME}-nginx
 
 parameters:
-  - description: List developer emails that will view development deployment.
+  - description: List developer emails that will view development deployment only.
     displayName: Developer Emails.
     name: DEV_EMAILS_WITH_LOCATIONS
     value: 'changeme@example.com development;'
     required: false
+  - description: List developer emails that will be able to view development-ide.
+    displayName: Developer Emails with Access to IDE.
+    name: DEV_EMAILS_WITH_LOCATIONS_IDE
+    value: 'changeme@example.com development-ide;'
+    required: false
+  - description: Development pods to create. Default is 0 to save resources.
+    displayName: Replica Dev Pod Count
+    name: DEV_PODS
+    value: 0
+    required: true
+  - description: The URL of the repository with your application source code.
+    displayName: Git Repository URL
+    name: SOURCE_REPOSITORY_URL
+    required: true
+    value: https://github.com/openshift/nodejs-ex.git
+  - description: Set this to a branch name, tag or other ref of your repository if you
+      are not using the default branch.
+    displayName: Git Reference
+    name: SOURCE_REPOSITORY_REF
+  - description: The URL of the repository with your dev application source code.
+    displayName: Git Repository URL
+    name: SOURCE_REPOSITORY_URL_DEV
+    required: true
+    value: https://github.com/openshift/nodejs-ex.git
+  - description: Set this to a dev branch name, tag or other ref of your repository if you
+      are not using the default branch.
+    displayName: Git Reference
+    name: SOURCE_REPOSITORY_REF_DEV
+    required: true
+    value: master
   - description: Run Node.js Application.
     displayName: Secondary Application
     name: SEC_PROC
@@ -527,24 +565,6 @@ parameters:
     name: CPU_DEV_LIMIT
     required: true
     value: '200m'
-  - description: The URL of the repository with your application source code.
-    displayName: Git Repository URL
-    name: SOURCE_REPOSITORY_URL
-    required: true
-    value: https://github.com/openshift/nodejs-ex.git
-  - description: Set this to a branch name, tag or other ref of your repository if you
-      are not using the default branch.
-    displayName: Git Reference
-    name: SOURCE_REPOSITORY_REF
-  - description: The URL of the repository with your dev application source code.
-    displayName: Git Repository URL
-    name: SOURCE_REPOSITORY_URL_DEV
-    required: true
-    value: https://github.com/openshift/nodejs-ex.git
-  - description: Set this to a dev branch name, tag or other ref of your repository if you
-      are not using the default branch.
-    displayName: Git Reference
-    name: SOURCE_REPOSITORY_REF_DEV
   - description: Set this to the relative path to your project if it is not in the root
       of your repository.
     displayName: Context Directory
