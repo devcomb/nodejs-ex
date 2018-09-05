@@ -175,7 +175,7 @@ objects:
       template.alpha.openshift.io/wait-for-ready: 'true'
     name: ${NAME}-proxy
   spec:
-    replicas: ${DEV_PODS}
+    replicas: 1
     selector:
       name: ${NAME}-proxy
     strategy:
@@ -247,7 +247,7 @@ objects:
       template.alpha.openshift.io/wait-for-ready: 'true'
     name: ${NAME}-development
   spec:
-    replicas: 1
+    replicas: ${DEV_PODS}
     selector:
       name: ${NAME}-development
     strategy:
