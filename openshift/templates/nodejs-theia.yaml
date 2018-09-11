@@ -318,6 +318,8 @@ objects:
         env:
         - name: NPM_MIRROR
           value: "${NPM_MIRROR}"
+        - name: DEV_MODE
+          value: 'true'
         forcePull: true
         from:
           kind: DockerImage
