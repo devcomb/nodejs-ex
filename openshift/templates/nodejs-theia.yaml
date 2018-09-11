@@ -103,7 +103,7 @@ objects:
   metadata:
     name: ${NAME}-proxy
     annotations:
-      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${NAME}-nginx-${SERVICE_HASH}"}}'
+      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${NAME}-nginx"}}'
 
       
 - apiVersion: v1
