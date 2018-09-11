@@ -231,7 +231,7 @@ objects:
           image: docker.io/openshift/oauth-proxy:latest
           imagePullPolicy: IfNotPresent
           ports:
-          - containerPort: 8443
+          - containerPort: 4180
             name: public
             protocol: TCP
           args:          
