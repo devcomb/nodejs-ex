@@ -26,15 +26,34 @@ objects:
   metadata:
     name: ${NAME}-nginx
   spec:
-    port:
-      targetPort: 8080-tcp
     tls:
-      termination: edge
+      termination: Edge
     to:
       kind: Service
       name: ${NAME}-nginx-${SERVICE_HASH}
       weight: 100
     wildcardPolicy: None
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      openshift.io/generated-by: OpenShiftWebConsole
+    creationTimestamp: null
+    labels:
+      app: ${NAME}-nginx-${SERVICE_HASH}
+    name: ${NAME}-nginx-${SERVICE_HASH}
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      name: ${NAME}-nginx
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
 - apiVersion: v1
   kind: Service
   metadata:
@@ -45,7 +64,7 @@ objects:
     ports:
     - name: ${NAME}-proxy
       port: 8080
-      targetPort: 8080
+      targetPort: 4180
     selector:
       name: ${NAME}-proxy
 - apiVersion: v1
@@ -61,6 +80,32 @@ objects:
       targetPort: ${{SEC_PORT}}
     selector:
       name: ${NAME}
+      
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: Exposes and load balances the application pods
+    name: ${NAME}-development-${SERVICE_HASH}
+  spec:
+    ports:
+    - name: theia-dev
+      port: ${{THEIA_PORT}}
+      targetPort: ${{THEIA_PORT}}
+    - name: web-dev
+      port: ${{SEC_PORT}}
+      targetPort: ${{SEC_PORT}}
+    selector:
+      name: ${NAME}-development
+      
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: ${NAME}-proxy
+    annotations:
+      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${NAME}-nginx-${SERVICE_HASH}"}}'
+
+      
 - apiVersion: v1
   kind: ImageStream
   metadata:
@@ -160,12 +205,6 @@ objects:
       type: ImageChange
     - type: ConfigChange
 
-- apiVersion: v1
-  kind: ServiceAccount
-  metadata:
-    name: ${NAME}-proxy
-    annotations:
-      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${NAME}-proxy"}}'
 
 - apiVersion: v1
   kind: DeploymentConfig
@@ -186,25 +225,21 @@ objects:
           name: ${NAME}-proxy
         name: ${NAME}-proxy
       spec:
-        serviceAccount: ${NAME}-proxy
         serviceAccountName: ${NAME}-proxy
         containers:
         - name: oauth-proxy
           image: docker.io/openshift/oauth-proxy:latest
           imagePullPolicy: IfNotPresent
           ports:
-          - containerPort: 8080
+          - containerPort: 8443
             name: public
             protocol: TCP
           args:          
-            - --http-address=:8080
+            - --http-address=:4180
             - --provider=openshift
             - --openshift-service-account=${NAME}-proxy
             - --cookie-secret=${COOKIE_SECRET}
             - --cookie-secure=false
-            - --proxy-prefix=/oauth2
-            - --pass-basic-auth=true
-            - --set-xauthrequest
             - --upstream=http://${NAME}-nginx-${SERVICE_HASH}:8080
             - --tls-cert=/etc/tls/private/tls.crt
             - --tls-key=/etc/tls/private/tls.key
@@ -222,22 +257,7 @@ objects:
     triggers:
     - type: ConfigChange
 
-- apiVersion: v1
-  kind: Service
-  metadata:
-    annotations:
-      description: Exposes and load balances the application pods
-    name: ${NAME}-development-${SERVICE_HASH}
-  spec:
-    ports:
-    - name: theia-dev
-      port: ${{THEIA_PORT}}
-      targetPort: ${{THEIA_PORT}}
-    - name: web-dev
-      port: ${{SEC_PORT}}
-      targetPort: ${{SEC_PORT}}
-    selector:
-      name: ${NAME}-development
+
 
 - apiVersion: v1
   kind: DeploymentConfig
@@ -323,9 +343,7 @@ objects:
           kind: DockerImage
           name: docker.io/devcomb/theia-openshift:latest
       type: Source
-    triggers:
-    - type: ImageChange
-    - type: ConfigChange
+    triggers: []
 
 - apiVersion: v1
   kind: DeploymentConfig
@@ -367,8 +385,6 @@ objects:
           ports:
           - containerPort: 8080
             protocol: TCP
-          - containerPort: 8443
-            protocol: TCP
           readinessProbe:
             exec:
               command:
@@ -401,27 +417,6 @@ objects:
           name: ${NAME}-nginx:latest
       type: ImageChange
     - type: ConfigChange
-- apiVersion: v1
-  kind: Service
-  metadata:
-    annotations:
-      openshift.io/generated-by: OpenShiftWebConsole
-    creationTimestamp: null
-    labels:
-      app: ${NAME}-nginx-${SERVICE_HASH}
-    name: ${NAME}-nginx-${SERVICE_HASH}
-  spec:
-    ports:
-    - name: 8080-tcp
-      port: 8080
-      protocol: TCP
-      targetPort: 8080
-    selector:
-      name: ${NAME}-nginx
-    sessionAffinity: None
-    type: ClusterIP
-  status:
-    loadBalancer: {}
 - apiVersion: v1
   kind: BuildConfig
   metadata:
@@ -630,7 +625,7 @@ parameters:
     required: true
   - description: Generate hash for cookie secret.
     displayName: Cookie Secret
-    from: '[a-z]{20}'
+    from: '[a-z]{16}'
     generate: expression
     name: COOKIE_SECRET
     required: true
