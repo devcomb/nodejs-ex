@@ -475,7 +475,7 @@ parameters:
   - description: Development pods to create. Default is 0 to save resources.
     displayName: Replica Dev Pod Count
     name: DEV_PODS
-    value: 0
+    value: '0'
     required: true
   - description: The URL of the repository with your application source code.
     displayName: Git Repository URL
