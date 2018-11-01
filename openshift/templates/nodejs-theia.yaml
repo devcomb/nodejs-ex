@@ -163,9 +163,9 @@ objects:
 - apiVersion: v1
   kind: ServiceAccount
   metadata:
-    name: ${NAME}-proxy
+    name: ${NAME}-nginx
     annotations:
-      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${NAME}-proxy"}}'
+      serviceaccounts.openshift.io/oauth-redirectreference.primary: '{"kind":"OAuthRedirectReference","apiVersion":"v1","reference":{"kind":"Route","name":"${NAME}-nginx"}}'
 
 - apiVersion: v1
   kind: DeploymentConfig
