@@ -44,8 +44,8 @@ objects:
   spec:
     ports:
     - name: ${NAME}-proxy
-      port: 443
-      targetPort: 8443
+      port: 8080
+      targetPort: 8080
     selector:
       name: ${NAME}-proxy
 - apiVersion: v1
