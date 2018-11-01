@@ -186,8 +186,8 @@ objects:
           name: ${NAME}-proxy
         name: ${NAME}-proxy
       spec:
-        serviceAccount: ${NAME}-proxy
-        serviceAccountName: ${NAME}-proxy
+        serviceAccount: ${NAME}-nginx
+        serviceAccountName: ${NAME}-nginx
         containers:
         - name: oauth-proxy
           image: docker.io/openshift/oauth-proxy:latest
