@@ -44,8 +44,8 @@ objects:
   spec:
     ports:
     - name: ${NAME}-proxy
-      port: 8080
-      targetPort: 8080
+      port: 4180
+      targetPort: 4180
     selector:
       name: ${NAME}-proxy
 - apiVersion: v1
@@ -193,17 +193,15 @@ objects:
           image: docker.io/openshift/oauth-proxy:latest
           imagePullPolicy: IfNotPresent
           ports:
-          - containerPort: 8080
+          - containerPort: 4180
             name: public
             protocol: TCP
           args:          
-            - --http-address=:8080
+            - --http-address=:4180
             - --provider=openshift
             - --openshift-service-account=${NAME}-nginx
             - --cookie-secret=${COOKIE_SECRET}
             - --cookie-secure=false
-            - --proxy-prefix=/oauth2
-            - --pass-basic-auth=true
             - --set-xauthrequest
             - --upstream=http://${NAME}-nginx-${SERVICE_HASH}:8080
             - --tls-cert=/etc/tls/private/tls.crt
@@ -359,7 +357,7 @@ objects:
           - name: APPWEB3_ADDR
             value: ${NAME}-development-${SERVICE_HASH}:3000
           - name: APPWEB4_ADDR
-            value: ${NAME}-proxy-${SERVICE_HASH}:8080
+            value: ${NAME}-proxy-${SERVICE_HASH}:4180
           - name: DEV_EMAILS_WITH_LOCATIONS
             value: "${DEV_EMAILS_WITH_LOCATIONS}"
           - name: DEV_EMAILS_WITH_LOCATIONS_IDE
