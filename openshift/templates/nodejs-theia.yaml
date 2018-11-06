@@ -314,6 +314,8 @@ objects:
     strategy:
       sourceStrategy:
         env:
+        - name: GIT_REPO_REF
+          value: "${SOURCE_REPOSITORY_REF_DEV}"
         - name: NPM_MIRROR
           value: "${NPM_MIRROR}"
         - name: DEV_MODE
