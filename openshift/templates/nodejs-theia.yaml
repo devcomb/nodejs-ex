@@ -320,8 +320,6 @@ objects:
           value: "${NPM_MIRROR}"
         - name: DEV_MODE
           value: 'true'
-        - name: STATUS_POLL
-          value: '600000'
         forcePull: true
         from:
           kind: DockerImage
