@@ -320,6 +320,14 @@ objects:
           value: "${NPM_MIRROR}"
         - name: DEV_MODE
           value: 'true'
+        - name: GIT_USERNAME
+          value: "${GIT_USERNAME}"
+        - name: GIT_EMAIL
+          value: "${GIT_EMAIL}"
+        - name: GIT_PASSWORD
+          value: "${GIT_PASSWORD}"
+        - name: GIT_TOKEN
+          value: "${GIT_TOKEN}"
         forcePull: true
         from:
           kind: DockerImage
