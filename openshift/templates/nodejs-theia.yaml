@@ -565,13 +565,13 @@ parameters:
     name: CPU_NGINX_LIMIT
     required: true
     value: '2m'
-  - description: Maximum amount of memory the container can use.
-    displayName: Memory Limit
+  - description: Maximum amount of memory the development container can use.
+    displayName: Dev Memory Limit
     name: MEMORY_DEV_LIMIT
     required: true
     value: 512Mi
-  - description: Maximum amount of CPU the container can use.
-    displayName: CPU Limit
+  - description: Maximum amount of CPU the development container can use.
+    displayName: Dev CPU Limit
     name: CPU_DEV_LIMIT
     required: true
     value: '400m'
