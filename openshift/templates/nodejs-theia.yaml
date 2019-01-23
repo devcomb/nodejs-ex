@@ -121,11 +121,6 @@ objects:
       spec:
         containers:
         - name: ${NAME}
-          env:
-          - name: SEC_PROC
-            value: "${SEC_PROC}"
-          - name: DEV_MODE
-            value: "${DEV_MODE}"
           image: ' '
           livenessProbe:
             httpGet:
